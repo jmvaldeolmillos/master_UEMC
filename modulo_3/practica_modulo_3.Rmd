@@ -13,14 +13,18 @@ En este caso, el objetivo final de la práctica es clasificar a los alumnos como 
 ### Carga de los datos y análisis descriptivo
 
 ```{r carga}
-
+setwd("~/Repos/master_UEMC/modulo_3")
 estudiantes <- read.csv2("../data/student/student-mat.csv", header = T, stringsAsFactors = T)
+set.seed(1680)
+library(dplyr)
+library(cluster)
+library(ggplot2)
 
 # Nos afianzamos de que es un dataframe
 class(estudiantes)
 
 #Monstramos los 5 primeros elementos.
-head(estudiantes, 10)
+head(estudiantes, 5)
 
 # ¿Cuántas observaciones y atributos posee el dataframe?
 dim(estudiantes)
@@ -45,20 +49,71 @@ Para el análisis exploratorio, se utilizará como método NO supervisado: CLUSTERI
 # Como trabajaremos con G3, vamos a eliminar directamente los atributos G1 y G2
 estudiantesC <- estudiantes[-c(31,32)]
 colnames(estudiantesC)[31] <- "notaFinal"
-
-# Recodificación de la variable
 estudiantesC$notaFinal[estudiantesC$notaFinal < 10] <- "Suspenso"
 estudiantesC$notaFinal[estudiantesC$notaFinal !="Suspenso"] <- "Aprobado"
 estudiantesC$notaFinal <- as.factor(estudiantesC$notaFinal)
+# Trabajamos Clustering, para ello, usamos la función daisy puesto que trabajar tanto con variables numéricas como categóricas.
+gower_dist <- daisy(estudiantesC, metric = "gower", type = list(logratio = 3))
+summary(gower_dist)
 
-estudiantes.mod <- estudiantesC[-31]
+# Buscamos el número de clusters óptimo, usamos PAM
+ancho <- c(NA)
+
+for(i in 2:10){
+  
+  ajustePam <- pam(gower_dist,
+                 diss = TRUE,
+                 k = i)
+  
+  ancho[i] <- ajustePam$silinfo$avg.width
+  
+}
+
+# Realizamos el graficado de número óptimo de clusters.
+plot(1:10, ancho,
+     xlab = "Número óptimo de Clusters",
+     ylab = "Ancho de la silueta")
+lines(1:10, ancho)
+
+# El número óptimo es 2. Trabajamos el Cluster
+ajustePam <- pam(gower_dist, diss = TRUE, k = 2)
+
+finalPam <- estudiantesC %>%
+  mutate(cluster = ajustePam$clustering) %>%
+  group_by(cluster) %>%
+  do(the_summary = summary(.))
+
+finalPam$the_summary
+
+estudiantesC[ajustePam$medoids,]
+
+# Visualización de los clusters
+library(Rtsne)
+modeloCluster <- Rtsne(gower_dist, is_distance = TRUE)
+
+modeloData <- modeloCluster$Y %>%
+  data.frame() %>%
+  setNames(c("X", "Y")) %>%
+  mutate(cluster = factor(ajustePam$clustering),
+         name = estudiantesC$notaFinal)
+
+ggplot(aes(x = X, y = Y), data = modeloData) +
+  geom_point(aes(color = cluster))
 
 ```
-
+  
+El cluster 1 va del 0 en el eje X hasta el 10 (color rojo) y el cluster 2 ocupa la parte izquierda, del 0 en el eje X hasta el -10. 
+  
+Los grupos vienen diferenciados principalmente por los siguientes atributos:
+  
+-   **Cluster 1**: En el cluster 1 (el que más elementos contiene) dominan las mujeres. Edad superior (18 años), el trabajo de la madre sobresale "at home", eligieron la escuela por preferencia de curso, las horas de estudio a la semana son de 5 a 10 horas. No realizan pagos extras, no realizan actividades extraescolares. De media, el consumo de alcohol diario es muy bajo, a igual que en fin de semana, salud general es normal (3 sobre 5).
+-   **Cluster 2**: Dominan los hombres, Edad de media inferior al cluster 1, trabajo de la madre es "teacher", eligieron la escuela por estar cerca de casa, estudian una media de 2 a 5 horas, si realizan pagos extras, al igual que actividades extraescolares. Consumen de media un poco más de alcohol respecto al cluster 1 (ligeramente), sin embargo su estado de salud es muy buena. Por lo general el número de ausencias respecto al cluster 1 es ligeramente superior.
+  
 ### Selección de variables, elección, construcción y optimización de al menos dos modelos machine Learning supervisados distintos
 
 ```{r modelos, echo=FALSE}
 
+estudiantes.mod <- estudiantesC[-31]
 # Pasamos las variables a su tipología correcta
 estudiantes[3:29] <- data.frame(lapply(estudiantes[3:29], as.factor))
 estudiantesM <- estudiantes[-c(31,32)]
