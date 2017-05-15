@@ -42,7 +42,16 @@ Para el análisis exploratorio, se utilizará como método NO supervisado: CLUSTERI
 
 ```{r analisis_exploratorio, echo=FALSE}
 
-plot(pressure)
+# Como trabajaremos con G3, vamos a eliminar directamente los atributos G1 y G2
+estudiantesC <- estudiantes[-c(31,32)]
+colnames(estudiantesC)[31] <- "notaFinal"
+
+# Recodificación de la variable
+estudiantesC$notaFinal[estudiantesC$notaFinal < 10] <- "Suspenso"
+estudiantesC$notaFinal[estudiantesC$notaFinal !="Suspenso"] <- "Aprobado"
+estudiantesC$notaFinal <- as.factor(estudiantesC$notaFinal)
+
+estudiantes.mod <- estudiantesC[-31]
 
 ```
 
@@ -53,11 +62,6 @@ plot(pressure)
 # Pasamos las variables a su tipología correcta
 estudiantes[3:29] <- data.frame(lapply(estudiantes[3:29], as.factor))
 estudiantesM <- estudiantes[-c(31,32)]
-
-# Recodificación de la variable
-estudiantesM$G3[estudiantesM$G3 < 10] <- "Suspenso"
-estudiantesM$G3[estudiantesM$G3 !="Suspenso"] <- "Aprobado"
-estudiantesM$G3 <- as.factor(estudiantesM$G3)
 
 ```
 
