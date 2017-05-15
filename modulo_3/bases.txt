@@ -1,0 +1,10 @@
+El análisis debería idealmente contar con la mayoría de estas fases:
+
+1- Introducción con el objetivo del análisis (con este dataset normalmente suele ser predecir el valor de la nota final G3 o clasificar a los alumnos como aprobados o suspendido en base a que esa nota sea mayor o menor que 10, pero se puede elegir otro si así se quiere)
+2- Carga de los datos y análisis descriptivo
+3- Análisis exploratorio apoyado en algún método NO supervisado
+4- Selección de variables, elección, construcción y optimización de al menos dos modelos machine Learning supervisados distintos (por ejemplo, Regresión Lineal y Árboles de Decisión, etc)
+5- Evaluación y comparación de dichos modelos
+
+El informe final puede ser entregado en formato Rmarkdown (http://rmarkdown.rstudio.com/) en el que se incluiría el código R y las explicaciones convenientes.
+
